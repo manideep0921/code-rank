@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+body { @apply bg-zinc-950 text-zinc-100; }
+
+/* --- CodeRank subtle 3D helpers --- */
+.btn-3d { transition: transform .15s ease, box-shadow .15s ease; transform: translateY(0); box-shadow: 0 6px 20px rgba(0,0,0,.25);} 
+.btn-3d:hover { transform: translateY(-2px) scale(1.01);} 
+.card-3d { transition: transform .2s ease, box-shadow .2s ease; box-shadow: 0 8px 30px rgba(0,0,0,.22);} 
+.card-3d:hover { transform: translateY(-3px); box-shadow: 0 14px 45px rgba(0,0,0,.28);} 
+
+/* CodeRank 3D helpers */
+.btn-3d { transition: transform .15s ease, box-shadow .15s ease; transform: translateY(0); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.btn-3d:hover { transform: translateY(-2px) scale(1.01); }
+.card-3d { transition: transform .2s ease, box-shadow .2s ease; box-shadow: 0 8px 30px rgba(0,0,0,.22); }
+.card-3d:hover { transform: translateY(-3px); box-shadow: 0 14px 45px rgba(0,0,0,.28); }
+
+/* CodeRank pro 3D */
+.btn-3d { transition: transform .15s ease, box-shadow .15s ease; transform: translateY(0); box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.btn-3d:hover { transform: translateY(-2px) scale(1.01); }
+.glow-lg { filter: drop-shadow(0 12px 30px rgba(124,58,237,.35)) drop-shadow(0 6px 16px rgba(0,0,0,.45)); }
+@keyframes pop { from { opacity:0; transform: translateY(8px) scale(.98); } to { opacity:1; transform: translateY(0) scale(1); } }
+.animate-pop { animation: pop .35s ease both; }
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spin-slow { animation: spinSlow 12s linear infinite; }
+

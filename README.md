@@ -5,6 +5,15 @@ Monorepo:
 - **frontend/**: React (Vite) + Tailwind
 
 ## Quick Start
+
+## 🧰 Tech Stack
+
+**Frontend:** React (Vite), Tailwind CSS  
+**Backend:** Node.js, Express.js  
+**Database:** PostgreSQL  
+**Runner:** Docker (Python / Node / C++ / Java)  
+**Other:** JWT Auth, XP + Level System, Badge Rewards
+
 ### Backend
 1) Copy `backend/.env` from example:
 
@@ -41,3 +50,13 @@ Notes
 Passwords stored with bcrypt via Postgres crypt(..., gen_salt('bf'))
 
 Problems have XP (easy 20, medium 40, hard 80)
+
+frontend
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9f08157f-0403-48f3-8cf3-415b36b76f6f" alt="Home Page" width="700"/>
+</p>
+
+Dashboard
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/57f63597-4f3c-4e9a-902e-ac067ba32b8f" alt="Dashboard" width="700"/>
+</p>

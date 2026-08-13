@@ -6,7 +6,7 @@ import pool from "../config/db.js";
 /* ---------- helpers ---------- */
 function sanitizeUser(row) {
   if (!row) return null;
-  const { password, password_hash, reset_token, reset_expires, ...safe } = row;
+  const { password_hash, reset_token, reset_expires, ...safe } = row;
   return safe;
 }
 
@@ -47,7 +47,7 @@ export async function signup(req, res) {
     const hashed = await bcrypt.hash(password, 10);
 
     const insertSql = `
-      INSERT INTO users (username, email, password, level, xp)
+      INSERT INTO users (username, email, password_hash, level, xp)
       VALUES ($1,$2,$3,1,0)
       RETURNING *
     `;
@@ -82,16 +82,14 @@ export async function signin(req, res) {
     const row = rs.rows[0];
     if (!row) return res.status(404).json({ error: "Not found" });
 
+    // Passwords are hashed with bcrypt on signup (see below); compare the
+    // same way here. There used to be a pgcrypto crypt() fallback for a
+    // second hashing scheme, but the pgcrypto extension was never actually
+    // enabled in any migration, so that branch always threw a 500 instead
+    // of a clean 401 on a wrong password. Removed rather than fixed, since
+    // nothing in this app ever stores a crypt()-format hash.
     let ok = false;
-    try { ok = await bcrypt.compare(password, row.password); } catch { ok = false; }
-
-    if (!ok) {
-      const chk = await pool.query(
-        "SELECT 1 FROM users WHERE email = $1 AND password = crypt($2, password)",
-        [email, password]
-      );
-      ok = chk.rowCount > 0;
-    }
+    try { ok = await bcrypt.compare(password, row.password_hash); } catch { ok = false; }
 
     if (!ok) return res.status(401).json({ error: "Invalid password" });
 
@@ -121,14 +119,7 @@ export async function loginOrCreate(req, res) {
 
     if (existing) {
       let ok = false;
-      try { ok = await bcrypt.compare(password, existing.password); } catch { ok = false; }
-      if (!ok) {
-        const chk = await pool.query(
-          "SELECT 1 FROM users WHERE email = $1 AND password = crypt($2, password)",
-          [email, password]
-        );
-        ok = chk.rowCount > 0;
-      }
+      try { ok = await bcrypt.compare(password, existing.password_hash); } catch { ok = false; }
       if (!ok) return res.status(401).json({ error: "Invalid password" });
 
       const user = sanitizeUser(existing);
@@ -142,7 +133,7 @@ export async function loginOrCreate(req, res) {
     let created;
     try {
       created = await pool.query(
-        `INSERT INTO users (username, email, password, level, xp)
+        `INSERT INTO users (username, email, password_hash, level, xp)
          VALUES ($1,$2,$3,1,100)
          RETURNING *`,
         [uname, email, hashed]
@@ -151,7 +142,7 @@ export async function loginOrCreate(req, res) {
       if (e.code === "23505" && /username/i.test(String(e.detail || ""))) {
         const alt = usernameFromEmail(email);
         created = await pool.query(
-          `INSERT INTO users (username, email, password, level, xp)
+          `INSERT INTO users (username, email, password_hash, level, xp)
            VALUES ($1,$2,$3,1,100)
            RETURNING *`,
           [alt, email, hashed]
@@ -233,7 +224,7 @@ export async function reset(req, res) {
     }
 
     const hash = await bcrypt.hash(new_password, 10);
-    await pool.query("UPDATE users SET password = $1 WHERE id = $2", [hash, payload.id]);
+    await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [hash, payload.id]);
 
     return res.json({ ok: true });
   } catch (err) {

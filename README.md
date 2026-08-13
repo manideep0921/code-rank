@@ -1,54 +1,92 @@
-# CodeRank — Gamified Coding Practice
+# CodeRank
 
-Monorepo:
-- **backend/**: Node.js + Express + PostgreSQL + Docker runner (python/node/cpp/java)
-- **frontend/**: React (Vite) + Tailwind
+A gamified coding practice platform. Solve problems, get code run against test cases inside Docker sandboxes, earn XP and badges, and climb a leaderboard.
 
-## Quick Start
+## Features
 
-## 🧰 Tech Stack
+- Problem catalog with detail pages, difficulty tiers, and per-problem submission history
+- Code execution in isolated Docker containers, one runner image per language (Python, Node, C++, Java)
+- XP and leveling system (easy problems worth 20 XP, medium 40, hard 80) with badge rewards
+- Global leaderboard and per-user profile stats
+- Auth with bcrypt-hashed passwords, session-protected routes via middleware
+- Notes feature for users to save thoughts against a problem
 
-**Frontend:** React (Vite), Tailwind CSS  
-**Backend:** Node.js, Express.js  
-**Database:** PostgreSQL  
-**Runner:** Docker (Python / Node / C++ / Java)  
-**Other:** JWT Auth, XP + Level System, Badge Rewards
+## Architecture
 
-### Backend
-1) Copy `backend/.env` from example:
+```
+code-rank/
+├── backend/
+│   ├── routes/          # auth, problems, run, submit, submissions, leaderboard, user, profile, notes
+│   ├── controllers/     # request handlers per resource
+│   ├── services/        # judgeService (test execution), execService (sandbox runner)
+│   ├── models/          # User, Problem, Submission, badges
+│   └── middleware/       # auth, requireAuth
+├── frontend/             # React (Vite) + Tailwind
+└── docker/                # one Dockerfile per supported language runner
+```
 
-PORT=8080
-JWT_SECRET=change-me
-PGHOST=127.0.0.1
-PGPORT=5432
-PGDATABASE=coderank
-PGUSER=coderank_user
-PGPASSWORD=cr_pass_123
-2) Install & run:
+Code submissions are routed through `judgeService`/`execService`, which run user code inside the matching language's Docker container rather than executing it directly on the host.
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React (Vite), Tailwind CSS |
+| Backend | Node.js, Express |
+| Database | PostgreSQL |
+| Code execution | Docker (separate image per language: Python, Node, C++, Java) |
+| Auth | JWT, bcrypt password hashing |
+
+## Setup
+
+**Backend**
+
 ```bash
 cd backend
-npm i
+cp .env.example .env   # set PGHOST/PGUSER/PGPASSWORD/JWT_SECRET
+npm install
 npm run dev
-curl -s http://localhost:8080/health
+curl http://localhost:8080/health
+```
 
+**Frontend**
+
+```bash
 cd frontend
 echo "VITE_API_BASE=http://localhost:8080" > .env
-npm i
+npm install
 npm run dev
+```
 
+**Language runner images**
+
+```bash
 docker build -t coderank-python ./docker/python
 docker build -t coderank-node   ./docker/node
 docker build -t coderank-cpp    ./docker/cpp
 docker build -t coderank-java   ./docker/java
+```
 
-curl -sS -X POST http://localhost:8080/api/auth/signin \
-  -H "Content-Type: application/json" \
-  -d '{"email":"maxxpuser@example.com","password":"Passw0rd!"}'
+## API Overview
 
-Notes
+```
+POST   /api/auth/signup
+POST   /api/auth/signin
+GET    /api/auth/me
 
-Passwords stored with bcrypt via Postgres crypt(..., gen_salt('bf'))
+GET    /api/problems
+GET    /api/problems/:idOrSlug
+POST   /api/run              run code against sample input
+POST   /api/run/sandbox
+POST   /api/submit           submit for grading
+GET    /api/submissions/user/:id
+GET    /api/submissions/problem/:problemId
 
-Problems have XP (easy 20, medium 40, hard 80)
+GET    /api/leaderboard
+GET    /api/user/overview
+GET    /api/profile/:id
+```
 
+## Notes
 
+Passwords are hashed with bcrypt via Postgres's `crypt(..., gen_salt('bf'))` rather than in application code.
